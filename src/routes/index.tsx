@@ -2,15 +2,22 @@
 import { useContext } from "react";
 
 //import context
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "../context/AuthContext.tsx";
 
 //import react router dom
 import { Navigate, Route, Routes } from "react-router";
 
-//import view
-import Login from "../views/auth/login.tsx";
-import Register from "../views/auth/register.tsx";
+//import view home
 import Home from "../views/home/index.tsx";
+
+//import view register
+import Register from "../views/auth/register.tsx";
+
+//import view login
+import Login from "../views/auth/login.tsx";
+
+//import view dashboard
+import Dashboard from "../views/admin/dashboard/index.tsx";
 
 export default function AppRoutes() {
   // Menggunakan useContext untuk mendapatkan nilai dari AuthContext
@@ -45,6 +52,14 @@ export default function AppRoutes() {
           ) : (
             <Login />
           )
+        }
+      />
+
+      {/* route "/admin/dashboard" */}
+      <Route
+        path="/admin/dashboard"
+        element={
+          isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />
         }
       />
     </Routes>

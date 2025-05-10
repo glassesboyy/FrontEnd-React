@@ -28,8 +28,19 @@ const Login: FC = () => {
         password,
       });
 
-      // Save token in cookie
-      Cookies.set("token", response.token, { expires: 7 }); // Token expires in 7 days
+      // Save token in cookie with 1 hour expiration
+      Cookies.set("token", response.token, { expires: 1 / 24 });
+
+      // Save user data in cookie - menggunakan response.data langsung
+      Cookies.set(
+        "user",
+        JSON.stringify({
+          id: response.data.id,
+          name: response.data.name,
+          username: response.data.username,
+          email: response.data.email,
+        })
+      );
 
       // Update authenticated state
       setIsAuthenticated(true);
