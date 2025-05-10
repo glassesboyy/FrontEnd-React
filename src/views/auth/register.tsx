@@ -1,114 +1,149 @@
+// import FC from react
 import type { FC, FormEvent } from "react";
 import { useState } from "react";
+
+//import hook useNavigate from react router
 import { useNavigate } from "react-router";
+
+//import custom  hook useRegister from hooks
 import { useRegister } from "../../hooks/auth/useRegister";
 
+//interface for validation errors
+interface ValidationErrors {
+  [key: string]: string;
+}
+
 const Register: FC = () => {
+  //initialize navigate
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
 
-  const registerMutation = useRegister();
+  //initialize useRegister
+  const { mutate, isPending } = useRegister();
 
-  const handleSubmit = async (e: FormEvent) => {
+  //define state
+  const [name, setName] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+
+  //define state for errors
+  const [errors, setErrors] = useState<ValidationErrors>({});
+
+  // Handle submit form
+  const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
 
-    try {
-      await registerMutation.mutateAsync({
+    // Call the register mutation
+    mutate(
+      {
         name,
-        email,
         username,
+        email,
         password,
-      });
-
-      // Redirect to login after successful registration
-      navigate("/login");
-    } catch (error) {
-      console.error("Registration error:", error);
-    }
+      },
+      {
+        onSuccess: () => {
+          // Redirect to login page
+          navigate("/login");
+        },
+        onError: (error: any) => {
+          //set errors to state "errors"
+          setErrors(error.response.data.errors);
+        },
+      }
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-800">REGISTER</h1>
-          <p className="text-gray-600 mt-2">
-            Create your account to get started
-          </p>
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-2xl">
+        <div className="bg-white shadow-md rounded-lg px-8 py-6">
+          <h4 className="text-2xl font-bold text-center text-gray-800 mb-6">
+            REGISTER
+          </h4>
+          <div className="border-b border-gray-200 mb-6"></div>
+          <form onSubmit={handleRegister}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Full Name"
+                />
+                {errors.Name && (
+                  <div className="bg-red-100 text-red-700 p-2 rounded-lg mt-2">
+                    {errors.Name}
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Username"
+                />
+                {errors.Username && (
+                  <div className="bg-red-100 text-red-700 p-2 rounded-lg mt-2">
+                    {errors.Username}
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Email address
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Email Address"
+                />
+                {errors.Email && (
+                  <div className="bg-red-100 text-red-700 p-2 rounded-lg mt-2">
+                    {errors.Email}
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Password"
+                />
+                {errors.Password && (
+                  <div className="bg-red-100 text-red-700 p-2 rounded-lg mt-2">
+                    {errors.Password}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="mt-6">
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200 disabled:bg-blue-300"
+                disabled={isPending}
+              >
+                {isPending ? "Loading..." : "REGISTER"}
+              </button>
+            </div>
+          </form>
         </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              Full Name
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              placeholder="Enter your full name"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              Username
-            </label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              placeholder="Enter your username"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={registerMutation.isPending}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:bg-blue-400"
-          >
-            {registerMutation.isPending ? "Registering..." : "Register"}
-          </button>
-
-          {registerMutation.isError && (
-            <p className="text-red-500 text-sm text-center">
-              {registerMutation.error?.message || "Registration failed"}
-            </p>
-          )}
-        </form>
       </div>
     </div>
   );

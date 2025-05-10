@@ -4,7 +4,6 @@ import { useAuthUser } from "../../../hooks/auth/useAuthUser";
 
 const Dashboard: FC = () => {
   const user = useAuthUser();
-  console.log("Dashboard user:", user); // Debug log
 
   return (
     <div className="container mx-auto px-4 my-8">

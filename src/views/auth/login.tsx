@@ -1,110 +1,139 @@
-import Cookies from "js-cookie";
+// import FC from react
 import type { FC, FormEvent } from "react";
 import { useContext, useState } from "react";
+
+//import hook useNavigate from react router
 import { useNavigate } from "react-router";
-import { AuthContext } from "../../context/AuthContext";
+
+//import custom  hook useLogin from hooks
 import { useLogin } from "../../hooks/auth/useLogin";
 
-const Login: FC = () => {
+//import js-cookie
+import Cookies from "js-cookie";
+
+//import context
+import { AuthContext } from "../../context/AuthContext";
+
+//interface for validation errors
+interface ValidationErrors {
+  [key: string]: string;
+}
+
+export const Login: FC = () => {
+  //initialize navigate
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
 
-  // Get auth context
-  const auth = useContext(AuthContext);
-  if (!auth) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  const { setIsAuthenticated } = auth;
+  //initialize useLogin
+  const { mutate, isPending } = useLogin();
 
-  const loginMutation = useLogin();
+  //destruct auth context "setIsAuthenticated"
+  const { setIsAuthenticated } = useContext(AuthContext)!;
 
-  const handleSubmit = async (e: FormEvent) => {
+  //define state
+  const [username, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+
+  //define state for errors
+  const [errors, setErrors] = useState<ValidationErrors>({});
+
+  // Handle submit form
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
 
-    try {
-      const response = await loginMutation.mutateAsync({
+    // Call the login mutation
+    mutate(
+      {
         username,
         password,
-      });
+      },
+      {
+        onSuccess: (data: any) => {
+          //set token to cookie
+          Cookies.set("token", data.data.token);
 
-      // Save token in cookie with 1 hour expiration
-      Cookies.set("token", response.token, { expires: 1 / 24 });
+          //set user to cookie
+          Cookies.set(
+            "user",
+            JSON.stringify({
+              id: data.data.id,
+              name: data.data.name,
+              username: data.data.username,
+              email: data.data.email,
+            })
+          );
 
-      // Save user data in cookie - menggunakan response.data langsung
-      Cookies.set(
-        "user",
-        JSON.stringify({
-          id: response.data.id,
-          name: response.data.name,
-          username: response.data.username,
-          email: response.data.email,
-        })
-      );
+          //set isAuthenticated to true
+          setIsAuthenticated(true);
 
-      // Update authenticated state
-      setIsAuthenticated(true);
-
-      // Redirect to dashboard after successful login
-      navigate("/dashboard");
-    } catch (error) {
-      console.error("Login error:", error);
-    }
+          // Redirect to dashboard page
+          navigate("/admin/dashboard");
+        },
+        onError: (error: any) => {
+          //set errors to state "errors"
+          setErrors(error.response.data.errors);
+        },
+      }
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-800">LOGIN</h1>
-          <p className="text-gray-600 mt-2">
-            Welcome back! Please login to continue
-          </p>
-        </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              Username
-            </label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              placeholder="Enter your username"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loginMutation.isPending}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:bg-blue-400"
-          >
-            {loginMutation.isPending ? "Logging in..." : "Login"}
-          </button>
-
-          {loginMutation.isError && (
-            <p className="text-red-500 text-sm text-center">
-              {loginMutation.error?.message || "Login failed"}
-            </p>
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md">
+        <div className="bg-white shadow-md rounded-lg px-8 py-6">
+          <h4 className="text-2xl font-bold text-center text-gray-800 mb-6">
+            LOGIN
+          </h4>
+          <div className="border-b border-gray-200 mb-6"></div>
+          {errors.Error && (
+            <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4">
+              Username or Password is incorrect
+            </div>
           )}
-        </form>
+          <form onSubmit={handleLogin}>
+            <div className="mb-4">
+              <label className="block text-gray-700 font-semibold mb-2">
+                Username
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Username"
+              />
+              {errors.Username && (
+                <div className="bg-red-100 text-red-700 p-2 rounded-lg mt-2">
+                  {errors.Username}
+                </div>
+              )}
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-gray-700 font-semibold mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Password"
+              />
+              {errors.Password && (
+                <div className="bg-red-100 text-red-700 p-2 rounded-lg mt-2">
+                  {errors.Password}
+                </div>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200 disabled:bg-blue-300"
+              disabled={isPending}
+            >
+              {isPending ? "Loading..." : "LOGIN"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
